@@ -40,6 +40,9 @@ public class QuadFace
                 Vector3 pointOnUnitCube = position + (percent.x - .5f) * 2 * axisA + (percent.y - .5f) * 2 * axisB;
                 vertices[i] = pointOnUnitCube * size;
 
+                // Reset so that all quads have z = 0
+                vertices[i].z = 0f;
+
                 // Draw two triangles forming a quad if not the last vertices
                 if (x != resolution - 1 && y != resolution - 1)
                 {

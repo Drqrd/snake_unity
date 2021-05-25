@@ -14,14 +14,15 @@ public class Settings
     public class Cells
     {
         public static int resolution = 2;
-        public static float size = Background.size - 0.1f;
-        public static float cellSize = 1;
-        public static int cells = 10;
+        public static float cellSize = .2f;
+        public static int cells = 25;
         public static int cellsResolution = cells * cells;
     }
 
     public class Player
     {
-
+        public static int resolution = 2;
+        public static float size = Cells.cellSize * .95f;
+        public static int initialLength = 3;
     }
 }

@@ -3,17 +3,18 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class GameController : MonoBehaviour
-{
+{ 
     QuadFace background;
     QuadFace[] cells;
-    QuadFace[] player;
-    QuadFace[] items;
+    QuadFace playerHead;
+    QuadFace item;
 
     // Initialize all meshes and such
     private void Start()
     {
         GenerateBackground();
         GenerateCells();
+        GeneratePlayer();
     }
 
     // Move player and spawn items, update scores
@@ -79,11 +80,15 @@ public class GameController : MonoBehaviour
                 cells[pos].ConstructMesh();
 
                 // Change position based on cell number
-                child.transform.localPosition =  CalculateCellOffset(i, j);
+                child.transform.localPosition =  CalculateCellOffset(i, j) + Vector3.forward / 1.01f;
                 
                 pos += 1;
             }
-        }   
+        }
+
+        // center on screen
+        obj.transform.position += (Settings.Cells.cells * Settings.Cells.cellSize)*(Vector3.up + Vector3.right);
+        obj.transform.position -= new Vector3(0.2f, 0.2f, 0f);
     }
 
     Vector3 CalculateCellOffset(int i, int j)
@@ -96,21 +101,45 @@ public class GameController : MonoBehaviour
 
         Vector2 percent = new Vector2(i, j) * Settings.Cells.cellSize;
 
-        // returns the value adjusted by where it is located in relation to the cellOrigin and scaled by backgroundSize
-        return position + (percent.x - .5f) * 2 * axisA + (percent.y - .5f) * 2 * axisB;
+        // returns the value adjusted by where it is located in relation to the cellOrigin
+        return position + (percent.x - (1 / Settings.Cells.cells)) * 2 * axisA + (percent.y - (1 / Settings.Cells.cells)) * 2 * axisB;
     }
 
+    /* 
+     * Two approaches:
+     * Variable sized list to contain player squares
+     * Spawn an initial snake, add square in direction travelling and delete tail
+    */
     void GeneratePlayer()
     {
 
+        MeshFilter[] bFilters = new MeshFilter[Settings.Player.initialLength - 1];
+
+        GameObject obj = new GameObject("Player");
+
+        GameObject head = new GameObject("Head");
+        head.transform.parent = obj.transform;
+
+        head.AddComponent<MeshRenderer>().sharedMaterial = (Material)Resources.Load("Materials/PlayerHead", typeof(Material));
+
+        MeshFilter hFilter = head.AddComponent<MeshFilter>();
+        hFilter.mesh = new Mesh();
+
+        playerHead = new QuadFace(hFilter.mesh, Settings.Player.resolution, Settings.Player.size, Settings.position);
+        playerHead.ConstructMesh();
+
+        for (int i = 0; i < Settings.Player.initialLength; i++)
+        {
+
+        }
     }
 
-    void GenerateItem()
+    void UpdatePlayer()
     {
 
     }
 
-    void UpdatePlayerPosition()
+    void UpdateItem()
     {
 
     }
