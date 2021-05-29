@@ -7,7 +7,21 @@ public class GameController : MonoBehaviour
     QuadFace background;
     QuadFace[] cells;
     QuadFace playerHead;
-    QuadFace item;
+    List<QuadFace> playerBody;
+    List<QuadFace> item;
+
+    // Global movement for access outside move function
+    Vector3 playerMovement = Vector3.up * Settings.Cells.cellSize * 2;
+    KeyCode invalidMove = Settings.Movement.down;
+
+    GameObject head;
+    List<GameObject> body;
+
+    // for checking if an item is eaten
+    bool ate;
+
+    // time bools
+    float second = 0f;
 
     // Initialize all meshes and such
     private void Start()
@@ -15,12 +29,18 @@ public class GameController : MonoBehaviour
         GenerateBackground();
         GenerateCells();
         GeneratePlayer();
+
+        //MainMenu();
     }
 
-    // Move player and spawn items, update scores
     private void Update()
     {
-
+        second += Time.deltaTime;
+        if (second >= 1f)
+        { 
+            second %= 1f;
+            UpdatePlayer();
+        }
     }
 
     void GenerateBackground()
@@ -112,12 +132,14 @@ public class GameController : MonoBehaviour
     */
     void GeneratePlayer()
     {
+        // List init for body filters
+        List<MeshFilter> bFilters = new List<MeshFilter>();
+        playerBody = new List<QuadFace>();
 
-        MeshFilter[] bFilters = new MeshFilter[Settings.Player.initialLength - 1];
-
+        //obj to hold all parts of player
         GameObject obj = new GameObject("Player");
 
-        GameObject head = new GameObject("Head");
+        head = new GameObject("Head");
         head.transform.parent = obj.transform;
 
         head.AddComponent<MeshRenderer>().sharedMaterial = (Material)Resources.Load("Materials/PlayerHead", typeof(Material));
@@ -125,22 +147,90 @@ public class GameController : MonoBehaviour
         MeshFilter hFilter = head.AddComponent<MeshFilter>();
         hFilter.mesh = new Mesh();
 
+        // Create Head
         playerHead = new QuadFace(hFilter.mesh, Settings.Player.resolution, Settings.Player.size, Settings.position);
         playerHead.ConstructMesh();
 
+        head.transform.localPosition += Vector3.back *.02f;
+
+        body = new List<GameObject>();
+        // Init body
         for (int i = 0; i < Settings.Player.initialLength; i++)
+        {
+            
+            body.Add(new GameObject("Body"));
+            body[i].transform.parent = obj.transform;
+
+            body[i].AddComponent<MeshRenderer>().sharedMaterial = (Material)Resources.Load("Materials/PlayerBody", typeof(Material));
+
+            bFilters.Add(body[i].AddComponent<MeshFilter>());
+            bFilters[i].mesh = new Mesh();
+
+            playerBody.Add(new QuadFace(bFilters[i].mesh, Settings.Player.resolution, Settings.Player.size, Settings.position));
+            playerBody[i].ConstructMesh();
+
+            body[i].transform.localPosition += Vector3.back * .02f;
+        }
+    }
+
+    void MainMenu()
+    {
+
+    }
+    
+    void UpdatePlayer()
+    {
+        // Temp storage for positions
+        Vector3 prevPosition = head.transform.localPosition;
+        Vector3 tempPosition;
+
+        // Move player
+        playerMovement = Move();
+        head.transform.localPosition += playerMovement;
+        
+        // Update segments in body
+        for (int i = 0; i < playerBody.Count; i++)
+        {
+
+            tempPosition = body[i].transform.localPosition;
+            body[i].transform.localPosition = prevPosition;
+            prevPosition = tempPosition;
+        }
+
+        if (ate == true)
         {
 
         }
     }
 
-    void UpdatePlayer()
+    void UpdateItem()
     {
 
     }
 
-    void UpdateItem()
+    // Movement controller (check if key is pressed & does not equal previous move, if no key pressed move in same direction)
+    Vector3 Move()
     {
-
+        if (Input.GetKey(Settings.Movement.up) && Settings.Movement.up != invalidMove) 
+        { 
+            invalidMove = Settings.Movement.down; 
+            return Vector3.up * Settings.Cells.cellSize * 2;
+        }
+        else if (Input.GetKey(Settings.Movement.down) && Settings.Movement.down != invalidMove)
+        {
+            invalidMove = Settings.Movement.up;
+            return Vector3.down * Settings.Cells.cellSize * 2;
+        }
+        else if (Input.GetKey(Settings.Movement.left) && Settings.Movement.left != invalidMove)
+        {
+            invalidMove = Settings.Movement.right;
+            return Vector3.left * Settings.Cells.cellSize * 2;
+        }
+        else if (Input.GetKey(Settings.Movement.right) && Settings.Movement.right != invalidMove)
+        {
+            invalidMove = Settings.Movement.left;
+            return Vector3.right * Settings.Cells.cellSize * 2;
+        }
+        else { return playerMovement; }
     }
 }
