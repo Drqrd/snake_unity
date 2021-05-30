@@ -5,7 +5,8 @@ using UnityEngine;
 public class Settings
 {
     public static Vector3 position = Vector3.back;
-    public static float gameSpeed = 1.5f;
+    public static float gameSpeed = .5f;
+
     public class Background
     {
         public static int resolution = 2;
@@ -28,6 +29,14 @@ public class Settings
         public static int initialLength = 3;
     }
 
+    public class Items
+    {
+        public static int resolution = 2;
+        public static float ratio = .9f;
+        public static float size = Cells.cellSize * ratio;
+        public static int initialNumber = 4;
+    }
+
     public class Movement
     {
         public static KeyCode up = KeyCode.W;
@@ -35,4 +44,10 @@ public class Settings
         public static KeyCode down = KeyCode.S;
         public static KeyCode right = KeyCode.D;
     }
+
+    public class Menu
+    { }
+
+    public class ScoreBoard
+    { }
 }

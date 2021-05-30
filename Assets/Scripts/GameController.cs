@@ -5,23 +5,28 @@ using UnityEngine;
 public class GameController : MonoBehaviour
 { 
     QuadFace background;
-    QuadFace[] cells;
+    QuadFace[] gameCells;
     QuadFace playerHead;
     List<QuadFace> playerBody;
-    List<QuadFace> item;
+    List<QuadFace> gameItem;
 
     // Global movement for access outside move function
     Vector3 playerMovement = Vector3.up * Settings.Cells.cellSize * 2;
     KeyCode invalidMove = Settings.Movement.down;
 
+    // GameObjects
     GameObject head;
+    GameObject[] cells;
     List<GameObject> body;
+    List<GameObject> item;
 
-    // for checking if an item is eaten
-    bool ate;
-
-    // time bools
+    // Time bools
     float second = 0f;
+    float itemTime = 0f;
+
+    // Vars when item eaten
+    int triggeredItem;
+    int score;
 
     // Initialize all meshes and such
     private void Start()
@@ -29,17 +34,35 @@ public class GameController : MonoBehaviour
         GenerateBackground();
         GenerateCells();
         GeneratePlayer();
-
+        GenerateItem();
         //MainMenu();
     }
 
     private void Update()
     {
         second += Time.deltaTime;
-        if (second >= 1f)
-        { 
-            second %= 1f;
+        itemTime += Time.deltaTime;
+        if (second >= Settings.gameSpeed)
+        {
+            second %= Settings.gameSpeed;
             UpdatePlayer();
+        }
+        if (itemTime >= Settings.gameSpeed * 5)
+        {
+            itemTime %= Settings.gameSpeed * 5;
+            UpdateItem();
+        }
+        if (CollisionCheck())
+        {
+            // Destroy item and remove it from list
+            Destroy(item[triggeredItem]);
+            item.RemoveAt(triggeredItem);
+
+            // Add to body
+            UpdateBody();
+
+            // Update scores
+            UpdateScores();
         }
     }
 
@@ -62,24 +85,25 @@ public class GameController : MonoBehaviour
         Material mat;
 
         // Allocate arrays
-        cells = new QuadFace[Settings.Cells.cellsResolution];
+        gameCells = new QuadFace[Settings.Cells.cellsResolution];
         MeshFilter[] meshFilters = new MeshFilter[Settings.Cells.cellsResolution];
 
         // Create game object
         GameObject obj = new GameObject("Cells");
 
         int pos = 0;
+        cells = new GameObject[Settings.Cells.cellsResolution];
         // Attach mesh filter and material
         for (int i = 0; i < Settings.Cells.cells; i++)
         {
             for (int j = 0; j < Settings.Cells.cells; j++)
             {
                 // Create cell gameobject, make it child of Cells empty gameobject
-                GameObject child = new GameObject("Cell - " + (pos + 1));
-                child.transform.parent = obj.transform;
+                cells[pos] = new GameObject("Cell - " + (pos + 1));
+                cells[pos].transform.parent = obj.transform;
 
                 // Attach mesh filter and material
-                meshFilters[pos] = child.AddComponent<MeshFilter>();
+                meshFilters[pos] = cells[pos].AddComponent<MeshFilter>();
                 meshFilters[pos].sharedMesh = new Mesh();
 
                 // Checkerboard colors
@@ -93,22 +117,21 @@ public class GameController : MonoBehaviour
                     if (j % 2 != 0) { mat = (Material)Resources.Load("Materials/Cell1", typeof(Material)); }
                     else { mat = (Material)Resources.Load("Materials/Cell2", typeof(Material)); }
                 }
-                child.AddComponent<MeshRenderer>().sharedMaterial = mat;
+                cells[pos].AddComponent<MeshRenderer>().sharedMaterial = mat;
 
                 // Generate QuadFaces and construct meshes
-                cells[pos] = new QuadFace(meshFilters[pos].sharedMesh, Settings.Cells.resolution, Settings.Cells.cellSize, Settings.position);
-                cells[pos].ConstructMesh();
+                gameCells[pos] = new QuadFace(meshFilters[pos].sharedMesh, Settings.Cells.resolution, Settings.Cells.cellSize, Settings.position);
+                gameCells[pos].ConstructMesh();
 
                 // Change position based on cell number
-                child.transform.localPosition =  CalculateCellOffset(i, j) + Vector3.forward / 1.01f;
+                cells[pos].transform.localPosition =  CalculateCellOffset(i, j) + Vector3.forward / 1.01f;
                 
                 pos += 1;
             }
         }
 
         // center on screen
-        obj.transform.position += (Settings.Cells.cells * Settings.Cells.cellSize)*(Vector3.up + Vector3.right);
-        obj.transform.position -= new Vector3(0.2f, 0.2f, 0f);
+        obj.transform.position += (Settings.Cells.cells * Settings.Cells.cellSize)*(Vector3.up + Vector3.right) - new Vector3(Settings.Cells.cellSize, Settings.Cells.cellSize, 0f);
     }
 
     Vector3 CalculateCellOffset(int i, int j)
@@ -143,6 +166,7 @@ public class GameController : MonoBehaviour
         head.transform.parent = obj.transform;
 
         head.AddComponent<MeshRenderer>().sharedMaterial = (Material)Resources.Load("Materials/PlayerHead", typeof(Material));
+        head.AddComponent<MeshCollider>();
 
         MeshFilter hFilter = head.AddComponent<MeshFilter>();
         hFilter.mesh = new Mesh();
@@ -172,6 +196,32 @@ public class GameController : MonoBehaviour
             body[i].transform.localPosition += Vector3.back * .02f;
         }
     }
+    
+    void GenerateItem()
+    {
+        List<MeshFilter> iFilters = new List<MeshFilter>();
+        gameItem = new List<QuadFace>();
+        
+        item = new List<GameObject>();
+        GameObject obj = new GameObject("Items");
+
+        for (int i = 0; i < Settings.Items.initialNumber; i++)
+        {
+            item.Add(new GameObject("Item"));
+            item[i].transform.parent = obj.transform;
+
+            item[i].AddComponent<MeshRenderer>().sharedMaterial = (Material)Resources.Load("Materials/Item", typeof(Material));
+
+            iFilters.Add(item[i].AddComponent<MeshFilter>());
+            iFilters[i].mesh = new Mesh();
+
+            gameItem.Add(new QuadFace(iFilters[i].mesh, Settings.Items.resolution, Settings.Items.size, Settings.position));
+            gameItem[i].ConstructMesh();
+
+            item[i].transform.localPosition += Vector3.back * .02f;
+            RandomizeLocation(item[i]);
+        }
+    }
 
     void MainMenu()
     {
@@ -196,16 +246,25 @@ public class GameController : MonoBehaviour
             body[i].transform.localPosition = prevPosition;
             prevPosition = tempPosition;
         }
-
-        if (ate == true)
-        {
-
-        }
     }
 
+    // Spawn new item
     void UpdateItem()
     {
+        GameObject parent = GameObject.Find("Items");
+        item.Add(new GameObject("Item"));
 
+        int ind = item.Count - 1;
+        item[ind].transform.parent = parent.transform;
+
+        item[ind].AddComponent<MeshRenderer>().sharedMaterial = (Material)Resources.Load("Materials/Item", typeof(Material));
+        item[ind].AddComponent<MeshFilter>().mesh = new Mesh();
+
+        QuadFace face = new QuadFace(item[ind].GetComponent<MeshFilter>().mesh, Settings.Items.resolution, Settings.Items.size, Settings.position);
+        face.ConstructMesh();
+
+        item[ind].transform.localPosition += Vector3.back * .02f;
+        RandomizeLocation(item[ind]);
     }
 
     // Movement controller (check if key is pressed & does not equal previous move, if no key pressed move in same direction)
@@ -232,5 +291,77 @@ public class GameController : MonoBehaviour
             return Vector3.right * Settings.Cells.cellSize * 2;
         }
         else { return playerMovement; }
+    }
+
+    void RandomizeLocation(GameObject obj)
+    {
+        Vector3 position = obj.transform.localPosition;
+        // Offset that centers the parent obj of cells[]
+        Vector3 offset = (Settings.Cells.cells * Settings.Cells.cellSize) * (Vector3.up + Vector3.right) - new Vector3(Settings.Cells.cellSize, Settings.Cells.cellSize, 0f);
+
+        int randInt = Random.Range(1, Settings.Cells.cellsResolution) - 1;
+        Vector3 randomLocation = cells[randInt].transform.localPosition;
+        randomLocation.z = head.transform.localPosition.z;
+
+        List<Vector3> invalidSpawn = new List<Vector3>();
+
+        invalidSpawn.Add(head.transform.localPosition);
+        for (int i = 0; i < body.Count; i++) { invalidSpawn.Add(body[i].transform.localPosition); }
+        for (int i = 0; i < item.Count; i++) { invalidSpawn.Add(item[i].transform.localPosition); }
+
+
+        // Check if random location is located on an existing item or snake
+        for (int i = 0; i < invalidSpawn.Count; i++)
+        {
+            if (invalidSpawn[i] == randomLocation + offset)
+            {
+                randInt = Random.Range(1, Settings.Cells.cellsResolution) - 1;
+                randomLocation = cells[randInt].transform.localPosition;
+                randomLocation.z = head.transform.localPosition.z;
+                i = 0;
+            }
+        }
+
+        obj.transform.localPosition = randomLocation + offset;   
+    }
+
+    void UpdateBody()
+    {
+        body.Add(new GameObject("Body"));
+
+        int ind = body.Count - 1;
+
+        body[ind].AddComponent<MeshRenderer>().sharedMaterial = (Material)Resources.Load("Materials/PlayerBody", typeof(Material));
+
+        body[ind].AddComponent<MeshFilter>().mesh = new Mesh();
+
+        playerBody.Add(new QuadFace(body[ind].GetComponent<MeshFilter>().mesh, Settings.Player.resolution, Settings.Player.size, Settings.position));
+        playerBody[ind].ConstructMesh();
+
+        body[ind].transform.localPosition = body[ind - 1].transform.localPosition;
+    }
+
+    bool CollisionCheck()
+    {
+        float headX = head.transform.localPosition.x;
+        float headY = head.transform.localPosition.y;
+        float err = Settings.Cells.cellSize / 2f;
+        for (int i = 0; i < item.Count; i++)
+        {
+            float itemX = item[i].transform.localPosition.x;
+            float itemY = item[i].transform.localPosition.y;
+           
+            if ( headX <= itemX + err && headX >= itemX - err && headY <= itemY + err && headY >= itemY - err)
+            {
+                triggeredItem = i;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void UpdateScores()
+    {
+        score += 1;
     }
 }
