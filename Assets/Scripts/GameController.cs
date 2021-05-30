@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameController : MonoBehaviour
 { 
@@ -19,14 +20,20 @@ public class GameController : MonoBehaviour
     GameObject[] cells;
     List<GameObject> body;
     List<GameObject> item;
+    GameObject mainMenu;
+    GameObject pauseMenu;
+    GameObject gameOver;
+    GameObject scoreBoard;
 
     // Time bools
     float second = 0f;
     float itemTime = 0f;
+    bool pauseGame = true;
 
     // Vars when item eaten
     int triggeredItem;
     int score;
+    float gameSpeed = Settings.initialGameSpeed;
 
     // Initialize all meshes and such
     private void Start()
@@ -35,34 +42,26 @@ public class GameController : MonoBehaviour
         GenerateCells();
         GeneratePlayer();
         GenerateItem();
-        //MainMenu();
+        GenerateMenus();
     }
 
     private void Update()
     {
+        // Pause game
+        if (pauseGame == true) { Time.timeScale = 0; }
+        else if (pauseGame == false) { Time.timeScale = 1; }
+
         second += Time.deltaTime;
         itemTime += Time.deltaTime;
-        if (second >= Settings.gameSpeed)
+        if (second >= gameSpeed)
         {
-            second %= Settings.gameSpeed;
+            second %= gameSpeed;
             UpdatePlayer();
         }
-        if (itemTime >= Settings.gameSpeed * 5)
+        if (itemTime >= gameSpeed * Settings.Items.spawnRate)
         {
-            itemTime %= Settings.gameSpeed * 5;
+            itemTime %= gameSpeed * Settings.Items.spawnRate;
             UpdateItem();
-        }
-        if (CollisionCheck())
-        {
-            // Destroy item and remove it from list
-            Destroy(item[triggeredItem]);
-            item.RemoveAt(triggeredItem);
-
-            // Add to body
-            UpdateBody();
-
-            // Update scores
-            UpdateScores();
         }
     }
 
@@ -223,9 +222,29 @@ public class GameController : MonoBehaviour
         }
     }
 
-    void MainMenu()
+    void GenerateMenus()
     {
+        // Main Menu stuff
+        mainMenu = new GameObject("Main Menu");
+        Canvas mCanvas = mainMenu.AddComponent<Canvas>();
+        mCanvas.renderMode = RenderMode.WorldSpace;
+        mCanvas.worldCamera = Camera.main;
 
+        RectTransform rec = mainMenu.GetComponent<RectTransform>();
+
+        // Scale canvas and set position
+        rec.anchoredPosition = new Vector3(-Settings.Background.size * 3 / 4, rec.transform.localPosition.y, rec.transform.localPosition.z);
+        rec.sizeDelta = new Vector2(Settings.Background.size / 2, Settings.Background.size);
+
+        // Add buttons for main menu
+        GameObject playButton = GenerateButton("Play");
+        playButton.transform.parent = mainMenu.transform;
+
+        // Pause Menu stuff
+        pauseMenu = new GameObject("Pause Menu");
+
+        // Score Board stuff
+        scoreBoard = new GameObject("Score Board");
     }
     
     void UpdatePlayer()
@@ -236,6 +255,31 @@ public class GameController : MonoBehaviour
 
         // Move player
         playerMovement = Move();
+
+        // Check if move will cause game over
+        if (CollisionCheck(body))
+        {
+            GameOver();
+        }
+
+        // if collides with item
+        if (CollisionCheck(item))
+        {
+            // Destroy item and remove it from list
+            Destroy(item[triggeredItem]);
+            item.RemoveAt(triggeredItem);
+
+            // Add to body
+            UpdateBody();
+
+            // Update scores
+            UpdateScores();
+
+            // Change gamespeed
+            gameSpeed -= Settings.difficulty;
+        }
+
+        // Update head position
         head.transform.localPosition += playerMovement;
         
         // Update segments in body
@@ -341,15 +385,15 @@ public class GameController : MonoBehaviour
         body[ind].transform.localPosition = body[ind - 1].transform.localPosition;
     }
 
-    bool CollisionCheck()
+    bool CollisionCheck(List<GameObject> list)
     {
         float headX = head.transform.localPosition.x;
         float headY = head.transform.localPosition.y;
         float err = Settings.Cells.cellSize / 2f;
-        for (int i = 0; i < item.Count; i++)
+        for (int i = 0; i < list.Count; i++)
         {
-            float itemX = item[i].transform.localPosition.x;
-            float itemY = item[i].transform.localPosition.y;
+            float itemX = list[i].transform.localPosition.x;
+            float itemY = list[i].transform.localPosition.y;
            
             if ( headX <= itemX + err && headX >= itemX - err && headY <= itemY + err && headY >= itemY - err)
             {
@@ -363,5 +407,26 @@ public class GameController : MonoBehaviour
     void UpdateScores()
     {
         score += 1;
+    }
+
+    void GameOver()
+    {
+
+    }
+
+    GameObject GenerateButton(string buttonName)
+    {
+        GameObject button = new GameObject(buttonName);
+        Button b = button.AddComponent<Button>();
+
+        Text t = button.AddComponent<Text>();
+        t.text = buttonName;
+        t.font = Settings.Menu.font;
+        t.fontSize = Settings.Menu.mainMenuOptionsSize;
+        t.material = Settings.Menu.material;
+
+        b.targetGraphic = t;
+
+        return button;
     }
 }

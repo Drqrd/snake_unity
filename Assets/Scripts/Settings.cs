@@ -5,7 +5,8 @@ using UnityEngine;
 public class Settings
 {
     public static Vector3 position = Vector3.back;
-    public static float gameSpeed = .5f;
+    public static float initialGameSpeed = 1f;
+    public static float difficulty = .1f;
 
     public class Background
     {
@@ -32,9 +33,10 @@ public class Settings
     public class Items
     {
         public static int resolution = 2;
-        public static float ratio = .9f;
+        public static float ratio = .5f;
         public static float size = Cells.cellSize * ratio;
         public static int initialNumber = 4;
+        public static int spawnRate;
     }
 
     public class Movement
@@ -46,7 +48,12 @@ public class Settings
     }
 
     public class Menu
-    { }
+    {
+        public static int titleSize = 5;
+        public static int mainMenuOptionsSize = 3;
+        public static Font font = (Font)Resources.Load("Fonts/Quicksand-Bold", typeof(Font));
+        public static Material material = (Material)Resources.Load("Materials/Text", typeof(Material));
+    }
 
     public class ScoreBoard
     { }
