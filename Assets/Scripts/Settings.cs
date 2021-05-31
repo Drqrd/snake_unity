@@ -7,7 +7,7 @@ public class Settings
     public static Vector3 position = Vector3.back;
     public static float initialGameSpeed = 1f;
     public static float difficulty = .1f;
-
+    
     public class Background
     {
         public static int resolution = 2;
@@ -51,7 +51,7 @@ public class Settings
     {
         public static int titleSize = 5;
         public static int mainMenuOptionsSize = 3;
-        public static Font font = (Font)Resources.Load("Fonts/Quicksand-Bold", typeof(Font));
+        public static Font font = (Font)Resources.Load("Fonts/Roboto/Roboto-Bold", typeof(Font));
         public static Material material = (Material)Resources.Load("Materials/Text", typeof(Material));
     }
 

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 public class GameController : MonoBehaviour
 { 
@@ -34,6 +35,8 @@ public class GameController : MonoBehaviour
     int triggeredItem;
     int score;
     float gameSpeed = Settings.initialGameSpeed;
+
+    private const string kStandardSpritePath = "UI/Skin/UISprite.psd";
 
     // Initialize all meshes and such
     private void Start()
@@ -224,17 +227,18 @@ public class GameController : MonoBehaviour
 
     void GenerateMenus()
     {
+        // Make event system
+        GameObject eventSystem = new GameObject("Event System");
+        eventSystem.AddComponent<EventSystem>();
+        eventSystem.AddComponent<StandaloneInputModule>();
+
         // Main Menu stuff
         mainMenu = new GameObject("Main Menu");
         Canvas mCanvas = mainMenu.AddComponent<Canvas>();
-        mCanvas.renderMode = RenderMode.WorldSpace;
+        mainMenu.AddComponent<CanvasScaler>();
+        mainMenu.AddComponent<GraphicRaycaster>();
+        mCanvas.renderMode = RenderMode.ScreenSpaceCamera;
         mCanvas.worldCamera = Camera.main;
-
-        RectTransform rec = mainMenu.GetComponent<RectTransform>();
-
-        // Scale canvas and set position
-        rec.anchoredPosition = new Vector3(-Settings.Background.size * 3 / 4, rec.transform.localPosition.y, rec.transform.localPosition.z);
-        rec.sizeDelta = new Vector2(Settings.Background.size / 2, Settings.Background.size);
 
         // Add buttons for main menu
         GameObject playButton = GenerateButton("Play");
@@ -418,8 +422,12 @@ public class GameController : MonoBehaviour
     {
         GameObject button = new GameObject(buttonName);
         Button b = button.AddComponent<Button>();
+        Image i = button.AddComponent<Image>();
 
-        Text t = button.AddComponent<Text>();
+        GameObject child = new GameObject("Text");
+        child.transform.parent = button.transform;
+        Text t = child.AddComponent<Text>();
+
         t.text = buttonName;
         t.font = Settings.Menu.font;
         t.fontSize = Settings.Menu.mainMenuOptionsSize;
