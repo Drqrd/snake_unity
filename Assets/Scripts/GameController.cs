@@ -36,8 +36,6 @@ public class GameController : MonoBehaviour
     int score;
     float gameSpeed = Settings.initialGameSpeed;
 
-    private const string kStandardSpritePath = "UI/Skin/UISprite.psd";
-
     // Initialize all meshes and such
     private void Start()
     {
@@ -75,7 +73,7 @@ public class GameController : MonoBehaviour
         // Attach mesh filter and material
         MeshFilter meshFilter = obj.AddComponent<MeshFilter>();
         meshFilter.mesh = new Mesh();
-        obj.AddComponent<MeshRenderer>().sharedMaterial = (Material)Resources.Load("Materials/Background", typeof(Material));
+        obj.AddComponent<MeshRenderer>().sharedMaterial = Settings.Background.material;
         
         // Generate new QuadFace and construct its mesh
         background = new QuadFace(meshFilter.mesh, Settings.Background.resolution, Settings.Background.size, Settings.position);
@@ -167,8 +165,7 @@ public class GameController : MonoBehaviour
         head = new GameObject("Head");
         head.transform.parent = obj.transform;
 
-        head.AddComponent<MeshRenderer>().sharedMaterial = (Material)Resources.Load("Materials/PlayerHead", typeof(Material));
-        head.AddComponent<MeshCollider>();
+        head.AddComponent<MeshRenderer>().sharedMaterial = Settings.Player.headMaterial;
 
         MeshFilter hFilter = head.AddComponent<MeshFilter>();
         hFilter.mesh = new Mesh();
@@ -187,7 +184,7 @@ public class GameController : MonoBehaviour
             body.Add(new GameObject("Body"));
             body[i].transform.parent = obj.transform;
 
-            body[i].AddComponent<MeshRenderer>().sharedMaterial = (Material)Resources.Load("Materials/PlayerBody", typeof(Material));
+            body[i].AddComponent<MeshRenderer>().sharedMaterial = Settings.Player.bodyMaterial;
 
             bFilters.Add(body[i].AddComponent<MeshFilter>());
             bFilters[i].mesh = new Mesh();
@@ -212,7 +209,7 @@ public class GameController : MonoBehaviour
             item.Add(new GameObject("Item"));
             item[i].transform.parent = obj.transform;
 
-            item[i].AddComponent<MeshRenderer>().sharedMaterial = (Material)Resources.Load("Materials/Item", typeof(Material));
+            item[i].AddComponent<MeshRenderer>().sharedMaterial = Settings.Items.material;
 
             iFilters.Add(item[i].AddComponent<MeshFilter>());
             iFilters[i].mesh = new Mesh();
@@ -232,25 +229,57 @@ public class GameController : MonoBehaviour
         eventSystem.AddComponent<EventSystem>();
         eventSystem.AddComponent<StandaloneInputModule>();
 
-        // Main Menu stuff
+        GenerateMainMenu();
+        GeneratePauseMenu();
+        GenerateSettings();
+        GenerateScoreBoard();
+    }
+
+    // Main Menu stuff
+    void GenerateMainMenu()
+    {
+        // Lots of setup
         mainMenu = new GameObject("Main Menu");
+        mainMenu.transform.position += Vector3.back;
         Canvas mCanvas = mainMenu.AddComponent<Canvas>();
         mainMenu.AddComponent<CanvasScaler>();
         mainMenu.AddComponent<GraphicRaycaster>();
         mCanvas.renderMode = RenderMode.ScreenSpaceCamera;
         mCanvas.worldCamera = Camera.main;
 
+        // Add text for title
+
+        // Values for moving main menu buttons to correct places
+        RectTransform rec = mainMenu.GetComponent<RectTransform>();
+        Vector3 offset = new Vector3(rec.sizeDelta.x * rec.localScale.x, rec.sizeDelta.y / 10 * rec.localScale.y, 0f);
+        Vector3 vertPosition = Vector3.zero;
+        vertPosition.y -= Settings.Menu.fontSizeTitle + Settings.Menu.spacing * 10;
+
         // Add buttons for main menu
-        GameObject playButton = GenerateButton("Play");
-        playButton.transform.parent = mainMenu.transform;
+        GameObject button = GenerateButton("Play", mainMenu);
+        ModifyButtonPosition(button, offset, vertPosition);
 
-        // Pause Menu stuff
+        
+    }
+
+    // Pause Menu stuff
+    void GeneratePauseMenu()
+    {
         pauseMenu = new GameObject("Pause Menu");
+    }
 
-        // Score Board stuff
+    // Settings menu to modify Settings class
+    void GenerateSettings()
+    {
+
+    }
+
+    // Score Board stuff
+    void GenerateScoreBoard()
+    {
         scoreBoard = new GameObject("Score Board");
     }
-    
+
     void UpdatePlayer()
     {
         // Temp storage for positions
@@ -305,7 +334,7 @@ public class GameController : MonoBehaviour
         int ind = item.Count - 1;
         item[ind].transform.parent = parent.transform;
 
-        item[ind].AddComponent<MeshRenderer>().sharedMaterial = (Material)Resources.Load("Materials/Item", typeof(Material));
+        item[ind].AddComponent<MeshRenderer>().sharedMaterial = Settings.Items.material;
         item[ind].AddComponent<MeshFilter>().mesh = new Mesh();
 
         QuadFace face = new QuadFace(item[ind].GetComponent<MeshFilter>().mesh, Settings.Items.resolution, Settings.Items.size, Settings.position);
@@ -341,6 +370,33 @@ public class GameController : MonoBehaviour
         else { return playerMovement; }
     }
 
+    void UpdateBody()
+    {
+        body.Add(new GameObject("Body"));
+
+        int ind = body.Count - 1;
+
+        body[ind].AddComponent<MeshRenderer>().sharedMaterial = Settings.Player.bodyMaterial;
+
+        body[ind].AddComponent<MeshFilter>().mesh = new Mesh();
+
+        playerBody.Add(new QuadFace(body[ind].GetComponent<MeshFilter>().mesh, Settings.Player.resolution, Settings.Player.size, Settings.position));
+        playerBody[ind].ConstructMesh();
+
+        body[ind].transform.localPosition = body[ind - 1].transform.localPosition;
+    }
+
+    void UpdateScores()
+    {
+        score += 1;
+    }
+    
+    // Display GAME OVER, allow to reset game
+    void GameOver()
+    {
+
+    }
+
     void RandomizeLocation(GameObject obj)
     {
         Vector3 position = obj.transform.localPosition;
@@ -370,23 +426,7 @@ public class GameController : MonoBehaviour
             }
         }
 
-        obj.transform.localPosition = randomLocation + offset;   
-    }
-
-    void UpdateBody()
-    {
-        body.Add(new GameObject("Body"));
-
-        int ind = body.Count - 1;
-
-        body[ind].AddComponent<MeshRenderer>().sharedMaterial = (Material)Resources.Load("Materials/PlayerBody", typeof(Material));
-
-        body[ind].AddComponent<MeshFilter>().mesh = new Mesh();
-
-        playerBody.Add(new QuadFace(body[ind].GetComponent<MeshFilter>().mesh, Settings.Player.resolution, Settings.Player.size, Settings.position));
-        playerBody[ind].ConstructMesh();
-
-        body[ind].transform.localPosition = body[ind - 1].transform.localPosition;
+        obj.transform.localPosition = randomLocation + offset;
     }
 
     bool CollisionCheck(List<GameObject> list)
@@ -398,8 +438,8 @@ public class GameController : MonoBehaviour
         {
             float itemX = list[i].transform.localPosition.x;
             float itemY = list[i].transform.localPosition.y;
-           
-            if ( headX <= itemX + err && headX >= itemX - err && headY <= itemY + err && headY >= itemY - err)
+
+            if (headX <= itemX + err && headX >= itemX - err && headY <= itemY + err && headY >= itemY - err)
             {
                 triggeredItem = i;
                 return true;
@@ -408,33 +448,43 @@ public class GameController : MonoBehaviour
         return false;
     }
 
-    void UpdateScores()
-    {
-        score += 1;
-    }
-
-    void GameOver()
-    {
-
-    }
-
-    GameObject GenerateButton(string buttonName)
+    GameObject GenerateButton(string buttonName, GameObject parent)
     {
         GameObject button = new GameObject(buttonName);
         Button b = button.AddComponent<Button>();
         Image i = button.AddComponent<Image>();
 
+        Vector3 parentSize = new Vector2(parent.GetComponent<RectTransform>().sizeDelta.x, parent.GetComponent<RectTransform>().sizeDelta.y);
+        Vector3 parentScale = new Vector3(parent.GetComponent<RectTransform>().localScale.x, parent.GetComponent<RectTransform>().localScale.y, parent.GetComponent<RectTransform>().localScale.z);
+
+        button.GetComponent<RectTransform>().sizeDelta = parentSize;
+
+        i.sprite = Settings.Menu.button;
+        i.material = Settings.Menu.material;
+        i.color = new Color(0f, 0f, 0f, 0f);
+
         GameObject child = new GameObject("Text");
         child.transform.parent = button.transform;
         Text t = child.AddComponent<Text>();
 
+        t.GetComponent<RectTransform>().sizeDelta = parentSize;
+        t.GetComponent<RectTransform>().localScale = parentScale;
         t.text = buttonName;
         t.font = Settings.Menu.font;
-        t.fontSize = Settings.Menu.mainMenuOptionsSize;
         t.material = Settings.Menu.material;
 
         b.targetGraphic = t;
 
+        button.transform.SetParent(parent.transform);
+
         return button;
+    }
+
+    void ModifyButtonPosition(GameObject button, Vector3 offset, Vector3 vertPosition)
+    {
+        button.GetComponentInChildren<Text>().fontSize = Settings.Menu.fontSizeLarge;
+        button.GetComponent<RectTransform>().localPosition += offset + vertPosition;
+
+        vertPosition.y -= button.GetComponentInChildren<Text>().fontSize + Settings.Menu.spacing;
     }
 }
