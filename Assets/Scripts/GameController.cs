@@ -222,6 +222,7 @@ public class GameController : MonoBehaviour
         }
     }
 
+    // All manual scaling just about
     void GenerateMenus()
     {
         // Make event system
@@ -247,7 +248,10 @@ public class GameController : MonoBehaviour
         mCanvas.renderMode = RenderMode.ScreenSpaceCamera;
         mCanvas.worldCamera = Camera.main;
 
-        // Add text for title
+        // Add text for title, modify font size and position
+        string text = "Snake";
+        GameObject title = GenerateText("Title", text, Settings.Menu.fontSizeTitle, mainMenu);
+        title.GetComponent<Text>().GetComponent<RectTransform>().localPosition = new Vector2(-mainMenu.GetComponent<RectTransform>().sizeDelta.x / 2f + Settings.Menu.spacing * 2.5f, mainMenu.GetComponent<RectTransform>().sizeDelta.y / 2f);
 
         // Values for moving main menu buttons to correct places
         RectTransform rec = mainMenu.GetComponent<RectTransform>();
@@ -256,7 +260,7 @@ public class GameController : MonoBehaviour
         vertPosition.y -= Settings.Menu.fontSizeTitle + Settings.Menu.spacing * 10;
 
         // Add buttons for main menu
-        GameObject button = GenerateButton("Play", mainMenu);
+        GameObject button = GenerateButton("Play", mainMenu, Settings.Menu.fontSizeLarge);
         ModifyButtonPosition(button, offset, vertPosition);
 
         
@@ -448,16 +452,19 @@ public class GameController : MonoBehaviour
         return false;
     }
 
-    GameObject GenerateButton(string buttonName, GameObject parent)
+    GameObject GenerateButton(string buttonName, GameObject parent, int fontSize)
     {
         GameObject button = new GameObject(buttonName);
+
         Button b = button.AddComponent<Button>();
         Image i = button.AddComponent<Image>();
 
         Vector3 parentSize = new Vector2(parent.GetComponent<RectTransform>().sizeDelta.x, parent.GetComponent<RectTransform>().sizeDelta.y);
-        Vector3 parentScale = new Vector3(parent.GetComponent<RectTransform>().localScale.x, parent.GetComponent<RectTransform>().localScale.y, parent.GetComponent<RectTransform>().localScale.z);
 
-        button.GetComponent<RectTransform>().sizeDelta = parentSize;
+        b.GetComponent<RectTransform>().sizeDelta = new Vector2(parentSize.x / 4.5f, fontSize + Settings.Menu.spacing * 3);
+        b.GetComponent<RectTransform>().localScale = new Vector3(1f, 1f, 1f);
+
+        // Vector3 parentScale = new Vector3(parent.GetComponent<RectTransform>().localScale.x, parent.GetComponent<RectTransform>().localScale.y, parent.GetComponent<RectTransform>().localScale.z);
 
         i.sprite = Settings.Menu.button;
         i.material = Settings.Menu.material;
@@ -467,8 +474,8 @@ public class GameController : MonoBehaviour
         child.transform.parent = button.transform;
         Text t = child.AddComponent<Text>();
 
-        t.GetComponent<RectTransform>().sizeDelta = parentSize;
-        t.GetComponent<RectTransform>().localScale = parentScale;
+        t.GetComponent<RectTransform>().sizeDelta = new Vector2(parentSize.x / 4.5f, fontSize + Settings.Menu.spacing * 3);
+        t.GetComponent<RectTransform>().localScale = new Vector3(1f,1f,1f);
         t.text = buttonName;
         t.font = Settings.Menu.font;
         t.material = Settings.Menu.material;
@@ -478,6 +485,28 @@ public class GameController : MonoBehaviour
         button.transform.SetParent(parent.transform);
 
         return button;
+    }
+
+    GameObject GenerateText(string textName, string text, int fontSize, GameObject parent)
+    {
+        GameObject obj = new GameObject(textName);
+        obj.transform.SetParent(parent.transform);
+
+        Text textObj = obj.AddComponent<Text>();
+        textObj.font = Settings.Menu.font;
+        textObj.fontSize = fontSize;
+        textObj.text = text;
+
+        RectTransform parentTransform = parent.GetComponent<RectTransform>();
+        RectTransform rec = textObj.GetComponent<RectTransform>();
+
+        rec.localScale = new Vector3(1f, 1f, 1f);
+        rec.pivot = new Vector2(0f, 1f);
+        rec.sizeDelta = new Vector2(parentTransform.sizeDelta.x / 4.5f, fontSize + Settings.Menu.spacing * 3);
+
+        obj.AddComponent<TextMesh>();
+
+        return obj;
     }
 
     void ModifyButtonPosition(GameObject button, Vector3 offset, Vector3 vertPosition)

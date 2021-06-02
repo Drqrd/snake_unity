@@ -58,7 +58,7 @@ public class Settings
         public static int fontSizeMedium = 32;
         public static int fontSizeSmall = 24;
         public static int spacing = 4;
-        public static Font font = (Font)Resources.Load("Fonts/Roboto/Roboto-Regular", typeof(Font));
+        public static Font font = (Font)Resources.Load("Fonts/Roboto/Roboto-Bold", typeof(Font));
         public static Material material = (Material)Resources.Load("Materials/Text", typeof(Material));
         public static Sprite largeButton = (Sprite)Resources.Load("Sprites/LargeEmptyButton", typeof(Sprite));
         public static Sprite button = (Sprite)Resources.Load("Sprites/EmptyButton", typeof(Sprite));
