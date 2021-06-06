@@ -23,7 +23,6 @@ public class GameController : MonoBehaviour
     List<GameObject> item;
     GameObject mainMenu;
     GameObject pauseMenu;
-    GameObject gameOver;
     GameObject scoreBoard;
 
     // Time bools
@@ -247,23 +246,37 @@ public class GameController : MonoBehaviour
         mainMenu.AddComponent<GraphicRaycaster>();
         mCanvas.renderMode = RenderMode.ScreenSpaceCamera;
         mCanvas.worldCamera = Camera.main;
+        mCanvas.planeDistance = 1;
+
+        // Position on Canvas, from center
+        float mmX = -mainMenu.GetComponent<RectTransform>().sizeDelta.x / 2f + Settings.Menu.spacing;
+        float mmY = mainMenu.GetComponent<RectTransform>().sizeDelta.y / 2f - (Settings.Menu.spacing * 8f);
 
         // Add text for title, modify font size and position
         string text = "Snake";
         GameObject title = GenerateText("Title", text, Settings.Menu.fontSizeTitle, mainMenu);
-        title.GetComponent<Text>().GetComponent<RectTransform>().localPosition = new Vector2(-mainMenu.GetComponent<RectTransform>().sizeDelta.x / 2f + Settings.Menu.spacing * 2.5f, mainMenu.GetComponent<RectTransform>().sizeDelta.y / 2f);
+        title.GetComponent<Text>().GetComponent<RectTransform>().localPosition = new Vector2(mmX, mmY);
 
-        // Values for moving main menu buttons to correct places
-        RectTransform rec = mainMenu.GetComponent<RectTransform>();
-        Vector3 offset = new Vector3(rec.sizeDelta.x * rec.localScale.x, rec.sizeDelta.y / 10 * rec.localScale.y, 0f);
-        Vector3 vertPosition = Vector3.zero;
-        vertPosition.y -= Settings.Menu.fontSizeTitle + Settings.Menu.spacing * 10;
+        // Title spacing from menu
+        mmY = mmY - (title.GetComponent<Text>().fontSize + Settings.Menu.spacing * 13.0f);
 
-        // Add buttons for main menu
-        GameObject button = GenerateButton("Play", mainMenu, Settings.Menu.fontSizeLarge);
-        ModifyButtonPosition(button, offset, vertPosition);
+        text = "Play";
+        GameObject play = GenerateText("PlayButton", text, Settings.Menu.fontSizeLarge, mainMenu);
+        play.GetComponent<Text>().GetComponent<RectTransform>().localPosition = new Vector2(mmX, mmY);
 
-        
+        // Spacing from play
+        mmY = mmY - (play.GetComponent<Text>().fontSize + Settings.Menu.spacing / 1.5f);
+
+        text = "Settings";
+        GameObject settings = GenerateText("SettingsButton", text, Settings.Menu.fontSizeMedium, mainMenu);
+        settings.GetComponent<Text>().GetComponent<RectTransform>().localPosition = new Vector2(mmX, mmY);
+
+        // Spacing from settings
+        mmY = mmY - (settings.GetComponent<Text>().fontSize + Settings.Menu.spacing / 3f);
+
+        text = "Quit";
+        GameObject quit = GenerateText("QuitButton", text, Settings.Menu.fontSizeMedium, mainMenu);
+        quit.GetComponent<Text>().GetComponent<RectTransform>().localPosition = new Vector2(mmX, mmY);
     }
 
     // Pause Menu stuff
@@ -281,7 +294,23 @@ public class GameController : MonoBehaviour
     // Score Board stuff
     void GenerateScoreBoard()
     {
+        // More setup same as all other canvases
         scoreBoard = new GameObject("Score Board");
+        scoreBoard.transform.position += Vector3.back;
+        Canvas sCanvas = scoreBoard.AddComponent<Canvas>();
+        scoreBoard.AddComponent<CanvasScaler>();
+        scoreBoard.AddComponent<GraphicRaycaster>();
+        sCanvas.renderMode = RenderMode.ScreenSpaceCamera;
+        sCanvas.worldCamera = Camera.main;
+        sCanvas.planeDistance = 1;
+
+        // Position on Canvas, from center
+        float mmX = mainMenu.GetComponent<RectTransform>().sizeDelta.x / 2f - Settings.Menu.spacing;
+        float mmY = mainMenu.GetComponent<RectTransform>().sizeDelta.y / 2f - (Settings.Menu.spacing * 8f);
+
+        string text = "Score";
+        GameObject score = GenerateText(text, text, Settings.Menu.fontSizeTitle, scoreBoard);
+        score.GetComponent<Text>().GetComponent<RectTransform>().localPosition = new Vector2(mmX, mmY);
     }
 
     void UpdatePlayer()
@@ -294,7 +323,7 @@ public class GameController : MonoBehaviour
         playerMovement = Move();
 
         // Check if move will cause game over
-        if (CollisionCheck(body))
+        if (CollisionCheck(body) || OutOfBounds())
         {
             GameOver();
         }
@@ -316,16 +345,19 @@ public class GameController : MonoBehaviour
             gameSpeed -= Settings.difficulty;
         }
 
-        // Update head position
-        head.transform.localPosition += playerMovement;
-        
-        // Update segments in body
-        for (int i = 0; i < playerBody.Count; i++)
+        if (pauseGame == false)
         {
+            // Update head position
+            head.transform.localPosition += playerMovement;
 
-            tempPosition = body[i].transform.localPosition;
-            body[i].transform.localPosition = prevPosition;
-            prevPosition = tempPosition;
+            // Update segments in body
+            for (int i = 0; i < playerBody.Count; i++)
+            {
+
+                tempPosition = body[i].transform.localPosition;
+                body[i].transform.localPosition = prevPosition;
+                prevPosition = tempPosition;
+            }
         }
     }
 
@@ -387,6 +419,7 @@ public class GameController : MonoBehaviour
         playerBody.Add(new QuadFace(body[ind].GetComponent<MeshFilter>().mesh, Settings.Player.resolution, Settings.Player.size, Settings.position));
         playerBody[ind].ConstructMesh();
 
+        body[ind].transform.parent = GameObject.Find("Player").transform;
         body[ind].transform.localPosition = body[ind - 1].transform.localPosition;
     }
 
@@ -398,7 +431,8 @@ public class GameController : MonoBehaviour
     // Display GAME OVER, allow to reset game
     void GameOver()
     {
-
+        pauseGame = true;
+        Debug.Log("Game Ended");
     }
 
     void RandomizeLocation(GameObject obj)
@@ -435,15 +469,13 @@ public class GameController : MonoBehaviour
 
     bool CollisionCheck(List<GameObject> list)
     {
-        float headX = head.transform.localPosition.x;
-        float headY = head.transform.localPosition.y;
+        Vector2 headPos = head.transform.localPosition + playerMovement;
         float err = Settings.Cells.cellSize / 2f;
         for (int i = 0; i < list.Count; i++)
         {
-            float itemX = list[i].transform.localPosition.x;
-            float itemY = list[i].transform.localPosition.y;
+            Vector2 itemPos = list[i].transform.localPosition;
 
-            if (headX <= itemX + err && headX >= itemX - err && headY <= itemY + err && headY >= itemY - err)
+            if (headPos.x <= itemPos.x + err && headPos.x >= itemPos.x - err && headPos.y <= itemPos.y + err && headPos.y >= itemPos.y - err)
             {
                 triggeredItem = i;
                 return true;
@@ -452,39 +484,20 @@ public class GameController : MonoBehaviour
         return false;
     }
 
-    GameObject GenerateButton(string buttonName, GameObject parent, int fontSize)
+    bool OutOfBounds()
     {
-        GameObject button = new GameObject(buttonName);
+        //headPosition
+        Vector2 headPos = new Vector2(head.transform.localPosition.x + playerMovement.x, head.transform.localPosition.y + playerMovement.y);
 
-        Button b = button.AddComponent<Button>();
-        Image i = button.AddComponent<Image>();
+        // Out of cells
+        float outStep = Settings.Cells.cellSize * Settings.Cells.cells;
 
-        Vector3 parentSize = new Vector2(parent.GetComponent<RectTransform>().sizeDelta.x, parent.GetComponent<RectTransform>().sizeDelta.y);
+        if (headPos.x <= -outStep || headPos.x >= outStep || headPos.y <= -outStep || headPos.y >= outStep)
+        {
+            return true;
+        }
 
-        b.GetComponent<RectTransform>().sizeDelta = new Vector2(parentSize.x / 4.5f, fontSize + Settings.Menu.spacing * 3);
-        b.GetComponent<RectTransform>().localScale = new Vector3(1f, 1f, 1f);
-
-        // Vector3 parentScale = new Vector3(parent.GetComponent<RectTransform>().localScale.x, parent.GetComponent<RectTransform>().localScale.y, parent.GetComponent<RectTransform>().localScale.z);
-
-        i.sprite = Settings.Menu.button;
-        i.material = Settings.Menu.material;
-        i.color = new Color(0f, 0f, 0f, 0f);
-
-        GameObject child = new GameObject("Text");
-        child.transform.parent = button.transform;
-        Text t = child.AddComponent<Text>();
-
-        t.GetComponent<RectTransform>().sizeDelta = new Vector2(parentSize.x / 4.5f, fontSize + Settings.Menu.spacing * 3);
-        t.GetComponent<RectTransform>().localScale = new Vector3(1f,1f,1f);
-        t.text = buttonName;
-        t.font = Settings.Menu.font;
-        t.material = Settings.Menu.material;
-
-        b.targetGraphic = t;
-
-        button.transform.SetParent(parent.transform);
-
-        return button;
+        return false;
     }
 
     GameObject GenerateText(string textName, string text, int fontSize, GameObject parent)
@@ -507,13 +520,5 @@ public class GameController : MonoBehaviour
         obj.AddComponent<TextMesh>();
 
         return obj;
-    }
-
-    void ModifyButtonPosition(GameObject button, Vector3 offset, Vector3 vertPosition)
-    {
-        button.GetComponentInChildren<Text>().fontSize = Settings.Menu.fontSizeLarge;
-        button.GetComponent<RectTransform>().localPosition += offset + vertPosition;
-
-        vertPosition.y -= button.GetComponentInChildren<Text>().fontSize + Settings.Menu.spacing;
     }
 }

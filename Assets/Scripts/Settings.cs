@@ -6,7 +6,7 @@ public class Settings
 {
     public static Vector3 position = Vector3.back;
     public static float initialGameSpeed = 1f;
-    public static float difficulty = .1f;
+    public static float difficulty = .05f;
     
     public class Background
     {
@@ -57,7 +57,7 @@ public class Settings
         public static int fontSizeLarge = 40;
         public static int fontSizeMedium = 32;
         public static int fontSizeSmall = 24;
-        public static int spacing = 4;
+        public static int spacing = 10;
         public static Font font = (Font)Resources.Load("Fonts/Roboto/Roboto-Bold", typeof(Font));
         public static Material material = (Material)Resources.Load("Materials/Text", typeof(Material));
         public static Sprite largeButton = (Sprite)Resources.Load("Sprites/LargeEmptyButton", typeof(Sprite));
