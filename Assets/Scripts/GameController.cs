@@ -28,7 +28,10 @@ public class GameController : MonoBehaviour
     // Time bools
     float second = 0f;
     float itemTime = 0f;
-    bool pauseGame = true;
+
+    // Game state related
+    bool newGame = false;
+    public static bool pauseGame = true;
 
     // Vars when item eaten
     int triggeredItem;
@@ -63,6 +66,8 @@ public class GameController : MonoBehaviour
             itemTime %= gameSpeed * Settings.Items.spawnRate;
             UpdateItem();
         }
+
+        if (newGame) { Delete(); Regenerate(); newGame = false; }
     }
 
     void GenerateBackground()
@@ -261,21 +266,21 @@ public class GameController : MonoBehaviour
         mmY = mmY - (title.GetComponent<Text>().fontSize + Settings.Menu.spacing * 13.0f);
 
         text = "Play";
-        GameObject play = GenerateText("PlayButton", text, Settings.Menu.fontSizeLarge, mainMenu);
+        GameObject play = GenerateText(Settings.Names.playButtonName, text, Settings.Menu.fontSizeLarge, mainMenu, true);
         play.GetComponent<Text>().GetComponent<RectTransform>().localPosition = new Vector2(mmX, mmY);
 
         // Spacing from play
         mmY = mmY - (play.GetComponent<Text>().fontSize + Settings.Menu.spacing / 1.5f);
 
         text = "Settings";
-        GameObject settings = GenerateText("SettingsButton", text, Settings.Menu.fontSizeMedium, mainMenu);
+        GameObject settings = GenerateText(Settings.Names.settingsButtonName, text, Settings.Menu.fontSizeMedium, mainMenu, true);
         settings.GetComponent<Text>().GetComponent<RectTransform>().localPosition = new Vector2(mmX, mmY);
 
         // Spacing from settings
         mmY = mmY - (settings.GetComponent<Text>().fontSize + Settings.Menu.spacing / 3f);
 
         text = "Quit";
-        GameObject quit = GenerateText("QuitButton", text, Settings.Menu.fontSizeMedium, mainMenu);
+        GameObject quit = GenerateText(Settings.Names.quitButtonName, text, Settings.Menu.fontSizeMedium, mainMenu, true);
         quit.GetComponent<Text>().GetComponent<RectTransform>().localPosition = new Vector2(mmX, mmY);
     }
 
@@ -305,12 +310,18 @@ public class GameController : MonoBehaviour
         sCanvas.planeDistance = 1;
 
         // Position on Canvas, from center
-        float mmX = mainMenu.GetComponent<RectTransform>().sizeDelta.x / 2f - Settings.Menu.spacing;
+        float mmX = mainMenu.GetComponent<RectTransform>().sizeDelta.x / 2f - (Settings.Menu.spacing * 14f);
         float mmY = mainMenu.GetComponent<RectTransform>().sizeDelta.y / 2f - (Settings.Menu.spacing * 8f);
 
         string text = "Score";
         GameObject score = GenerateText(text, text, Settings.Menu.fontSizeTitle, scoreBoard);
         score.GetComponent<Text>().GetComponent<RectTransform>().localPosition = new Vector2(mmX, mmY);
+
+        mmY = mmY - (score.GetComponent<Text>().fontSize + Settings.Menu.spacing);
+
+        // Scores
+        GameObject scoreNum = GenerateText("Score Number", "0", Settings.Menu.fontSizeTitle, scoreBoard);
+        scoreNum.GetComponent<Text>().GetComponent<RectTransform>().localPosition = new Vector2(mmX, mmY);
     }
 
     void UpdatePlayer()
@@ -426,6 +437,11 @@ public class GameController : MonoBehaviour
     void UpdateScores()
     {
         score += 1;
+        GameObject scoreBoard = GameObject.Find("Score Board");
+
+        // 1 is the score number, is created after the other
+        Transform child = scoreBoard.transform.Find("Score Number");
+        child.GetComponent<Text>().text = score.ToString();
     }
     
     // Display GAME OVER, allow to reset game
@@ -500,7 +516,7 @@ public class GameController : MonoBehaviour
         return false;
     }
 
-    GameObject GenerateText(string textName, string text, int fontSize, GameObject parent)
+    GameObject GenerateText(string textName, string text, int fontSize, GameObject parent, bool isClickable = false)
     {
         GameObject obj = new GameObject(textName);
         obj.transform.SetParent(parent.transform);
@@ -509,6 +525,8 @@ public class GameController : MonoBehaviour
         textObj.font = Settings.Menu.font;
         textObj.fontSize = fontSize;
         textObj.text = text;
+
+        if (isClickable) { obj.AddComponent<TextButton>(); }
 
         RectTransform parentTransform = parent.GetComponent<RectTransform>();
         RectTransform rec = textObj.GetComponent<RectTransform>();
@@ -520,5 +538,20 @@ public class GameController : MonoBehaviour
         obj.AddComponent<TextMesh>();
 
         return obj;
+    }
+
+    void Delete()
+    {
+        GameObject[] objs = GameObject.FindGameObjectsWithTag("Untagged");
+        for (int i = 0; i < objs.Length; i++) { Destroy(objs[i]); }
+    }
+    
+    void Regenerate()
+    {
+        GenerateBackground();
+        GenerateCells();
+        GeneratePlayer();
+        GenerateItem();
+        GenerateMenus();
     }
 }

@@ -39,7 +39,7 @@ public class Settings
         public static float ratio = .5f;
         public static float size = Cells.cellSize * ratio;
         public static int initialNumber = 4;
-        public static int spawnRate;
+        public static int spawnRate = 5;
         public static Material material = (Material)Resources.Load("Materials/Item", typeof(Material));
     }
 
@@ -63,8 +63,18 @@ public class Settings
         public static Sprite largeButton = (Sprite)Resources.Load("Sprites/LargeEmptyButton", typeof(Sprite));
         public static Sprite button = (Sprite)Resources.Load("Sprites/EmptyButton", typeof(Sprite));
         public static Sprite smallButton = (Sprite)Resources.Load("Sprites/SmallEmptyButton", typeof(Sprite));
+        public static Color colorNormal;
+        public static Color colorHover;
+        public static Color colorPressed;
     }
 
     public class ScoreBoard
     { }
+
+    public class Names
+    {
+        public static string playButtonName = "PlayButton";
+        public static string settingsButtonName = "SettingsButton";
+        public static string quitButtonName = "QuitButton";
+    }
 }
