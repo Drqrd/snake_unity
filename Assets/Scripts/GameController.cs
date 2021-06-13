@@ -397,7 +397,7 @@ public class GameController : MonoBehaviour
             UpdateScores();
 
             // Change gamespeed
-            gameSpeed -= Settings.difficulty;
+            if (itemCount % 2 == 0 && gameSpeed > Settings.minSpeed) { gameSpeed -= Settings.difficulty; }            
         }
 
         if (pauseGame == false)
@@ -493,6 +493,7 @@ public class GameController : MonoBehaviour
     {
         // make sure game doesnt continue
         pauseGame = true;
+        gameSpeed = Settings.initialGameSpeed;
 
         // Play game over sound
         GameObject.Find("AudioController").transform.Find("GameOverSound").GetComponent<AudioSource>().Play();
@@ -628,6 +629,5 @@ public class GameController : MonoBehaviour
         r.pivot = new Vector2(0.5f, 0.5f);
         r.localPosition = new Vector2(r.localPosition.x + Screen.width / 66f, r.localPosition.y);
         restart.SetActive(false);
-    }
-    
+    }  
 }

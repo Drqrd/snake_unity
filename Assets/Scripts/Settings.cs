@@ -6,6 +6,7 @@ public class Settings
 {
     public static Vector3 position = Vector3.back;
     public static float initialGameSpeed = 1f;
+    public static float minSpeed = .4f;
     public static float difficulty = .1f;
     public static Vector2 resolution = new Vector2(1920, 1080);
     public static string tag = "Destructable";
