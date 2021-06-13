@@ -35,6 +35,9 @@ public class TextButton : MonoBehaviour, IPointerClickHandler, IPointerDownHandl
         // Reset color
         textComp.material = null;
 
+        // Play button sound
+        GameObject.Find("AudioController").transform.Find("ButtonPressedSound").GetComponent<AudioSource>().Play();
+
         // Load the event associated with button
         onClick.Invoke();
     }
@@ -53,7 +56,8 @@ public class TextButton : MonoBehaviour, IPointerClickHandler, IPointerDownHandl
     // Moves to settings menu
     void ISettings()
     {
-        SceneManager.LoadScene("Settings");
+        Debug.Log("Debug Button");
+        // SceneManager.LoadScene("Settings");
     }
 
     // Quits game
@@ -65,6 +69,8 @@ public class TextButton : MonoBehaviour, IPointerClickHandler, IPointerDownHandl
     // Restarts game
     void IPlayAgain()
     {
+        // Play button sound
+        GameObject.Find("AudioController").transform.Find("OnRestartSound").GetComponent<AudioSource>().Play();
         GameController.newGame = true;
     }
 }

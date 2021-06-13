@@ -33,6 +33,19 @@ public class Settings
         public static int initialLength = 3;
         public static Material bodyMaterial = (Material)Resources.Load("Materials/PlayerBody", typeof(Material));
         public static Material headMaterial = (Material)Resources.Load("Materials/PlayerHead", typeof(Material));
+        public static Material GObodyMaterial = (Material)Resources.Load("Materials/GOPlayerBody", typeof(Material));
+        public static Material GOheadMaterial = (Material)Resources.Load("Materials/GOPlayerHead", typeof(Material));
+    }
+
+    public class Audio
+    {
+        // https://www.fesliyanstudios.com/royalty-free-music/downloads-c/8-bit-music/6
+        // 8 Bit Surf (By David Renda) - 60s ver.
+        public static AudioClip backgroundMusic = (AudioClip)Resources.Load("Sounds/BGM", typeof(AudioClip));
+        public static AudioClip ateItemSound = (AudioClip)Resources.Load("Sounds/AteItem", typeof(AudioClip));
+        public static AudioClip buttonPress = (AudioClip)Resources.Load("Sounds/ButtonPress", typeof(AudioClip));
+        public static AudioClip gameOver = (AudioClip)Resources.Load("Sounds/GameOver", typeof(AudioClip));
+        public static AudioClip onRestart = (AudioClip)Resources.Load("Sounds/OnRestart", typeof(AudioClip));
     }
 
     public class Items
@@ -70,9 +83,6 @@ public class Settings
         public static Color colorHover;
         public static Color colorPressed;
     }
-
-    public class ScoreBoard
-    { }
 
     public class Names
     {

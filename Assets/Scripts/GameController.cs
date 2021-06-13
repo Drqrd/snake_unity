@@ -22,7 +22,6 @@ public class GameController : MonoBehaviour
     List<GameObject> body;
     List<GameObject> item;
     GameObject mainMenu;
-    GameObject pauseMenu;
     GameObject scoreBoard;
 
     // Scaling for UI
@@ -45,11 +44,7 @@ public class GameController : MonoBehaviour
     // Initialize all meshes and such
     private void Start()
     {
-        GenerateBackground();
-        GenerateCells();
-        GeneratePlayer();
-        GenerateItem();
-        GenerateMenus();
+        Regenerate();
     }
 
     private void Update()
@@ -78,6 +73,16 @@ public class GameController : MonoBehaviour
         if (newGame) { Delete(); Regenerate(); newGame = false; }
     }
 
+    void Regenerate()
+    {
+        GenerateBackground();
+        GenerateCells();
+        GeneratePlayer();
+        GenerateItem();
+        GenerateMenus();
+        GenerateAudio();
+    }
+
     void GenerateBackground()
     {   // Create game object
         GameObject obj = new GameObject("Field");
@@ -91,6 +96,36 @@ public class GameController : MonoBehaviour
         // Generate new QuadFace and construct its mesh
         background = new QuadFace(meshFilter.mesh, Settings.Background.resolution, Settings.Background.size, Settings.position);
         background.ConstructMesh();
+    }
+
+    void GenerateAudio()
+    {
+        // Generates at runtime, does not delete or regenerate on reload
+        if (GameObject.Find("AudioController") == null)
+        {
+            GameObject obj = new GameObject("AudioController");
+
+            // background music, plays immediately
+            GameObject bgmObj = GenerateAudioSource("BGM", Settings.Audio.backgroundMusic, obj, true);
+            bgmObj.GetComponent<AudioSource>().Play();
+
+            // Rest of sounds
+            GameObject ateItemObj = GenerateAudioSource("AteItemSound", Settings.Audio.ateItemSound, obj);
+            GameObject buttonPressedObj = GenerateAudioSource("ButtonPressedSound", Settings.Audio.buttonPress, obj);
+            GameObject gameOverObj = GenerateAudioSource("GameOverSound", Settings.Audio.gameOver, obj);
+            GameObject onRestartObj = GenerateAudioSource("OnRestartSound", Settings.Audio.onRestart, obj);
+        }
+    }
+
+    GameObject GenerateAudioSource(string name, AudioClip sound, GameObject parent, bool loop = false)
+    {
+        GameObject obj = new GameObject(name);
+        obj.transform.parent = parent.transform;
+        AudioSource aud = obj.AddComponent<AudioSource>();
+        aud.clip = sound;
+        aud.loop = loop;
+
+        return obj;
     }
 
     void GenerateCells()
@@ -345,7 +380,11 @@ public class GameController : MonoBehaviour
         // if collides with item
         if (CollisionCheck(item))
         {
+            // For global item count
             itemCount--;
+
+            // Play sound on eating item
+            GameObject.Find("AudioController").transform.Find("AteItemSound").GetComponent<AudioSource>().Play();
 
             // Destroy item and remove it from list
             Destroy(item[triggeredItem]);
@@ -452,8 +491,20 @@ public class GameController : MonoBehaviour
     // Display GAME OVER, allow to reset game
     void GameOver()
     {
+        // make sure game doesnt continue
         pauseGame = true;
+
+        // Play game over sound
+        GameObject.Find("AudioController").transform.Find("GameOverSound").GetComponent<AudioSource>().Play();
+
+        // Indicate player death
+        head.GetComponent<MeshRenderer>().material = Settings.Player.GOheadMaterial;
+        for (int i = 0; i < body.Count; i++) { body[i].GetComponent<MeshRenderer>().sharedMaterial = Settings.Player.GObodyMaterial; }
+        
+
+        // Enable Play again button
         GameObject.Find("Main Menu").transform.Find("PlayAgainButton").gameObject.SetActive(true);
+
     }
 
     void RandomizeLocation(GameObject obj)
@@ -551,15 +602,6 @@ public class GameController : MonoBehaviour
     {
         GameObject[] objs = GameObject.FindGameObjectsWithTag("Destructable");
         for (int i = 0; i < objs.Length; i++) { Destroy(objs[i]); }
-    }
-    
-    void Regenerate()
-    {
-        GenerateBackground();
-        GenerateCells();
-        GeneratePlayer();
-        GenerateItem();
-        GenerateMenus();
     }
 
     Canvas SetupCanvas(GameObject obj)
