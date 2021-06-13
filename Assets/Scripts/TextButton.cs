@@ -21,6 +21,7 @@ public class TextButton : MonoBehaviour, IPointerClickHandler, IPointerDownHandl
         if (name == Settings.Names.playButtonName) { onClick.AddListener(IPlay); }
         if (name == Settings.Names.settingsButtonName) { onClick.AddListener(ISettings); }
         if (name == Settings.Names.quitButtonName) { onClick.AddListener(IQuit); }
+        if (name == Settings.Names.restartButtonName) { onClick.AddListener(IPlayAgain); }
     }
 
     public void OnPointerDown(PointerEventData pointerEventData)
@@ -42,6 +43,11 @@ public class TextButton : MonoBehaviour, IPointerClickHandler, IPointerDownHandl
     void IPlay()
     {
         GameController.pauseGame = false;
+        GameObject obj = GameObject.Find("Main Menu");
+        for (int i = 1; i < obj.transform.childCount; i++)
+        {
+            obj.transform.GetChild(i).gameObject.SetActive(false);
+        }
     }
 
     // Moves to settings menu
@@ -54,5 +60,11 @@ public class TextButton : MonoBehaviour, IPointerClickHandler, IPointerDownHandl
     void IQuit()
     {
         Application.Quit();
+    }
+
+    // Restarts game
+    void IPlayAgain()
+    {
+        GameController.newGame = true;
     }
 }

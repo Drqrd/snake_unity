@@ -6,7 +6,9 @@ public class Settings
 {
     public static Vector3 position = Vector3.back;
     public static float initialGameSpeed = 1f;
-    public static float difficulty = .05f;
+    public static float difficulty = .1f;
+    public static Vector2 resolution = new Vector2(1920, 1080);
+    public static string tag = "Destructable";
     
     public class Background
     {
@@ -40,6 +42,7 @@ public class Settings
         public static float size = Cells.cellSize * ratio;
         public static int initialNumber = 4;
         public static int spawnRate = 5;
+        public static int maxItems = 4;
         public static Material material = (Material)Resources.Load("Materials/Item", typeof(Material));
     }
 
@@ -53,11 +56,11 @@ public class Settings
 
     public class Menu
     {
-        public static int fontSizeTitle = 48;
-        public static int fontSizeLarge = 40;
-        public static int fontSizeMedium = 32;
-        public static int fontSizeSmall = 24;
-        public static int spacing = 10;
+        public static float titleScale = 1.0f;
+        public static float largeScale = 0.8f;
+        public static float mediumScale = 0.6f;
+        public static float smallScale = 0.4f;
+        public static int spacing = 12;
         public static Font font = (Font)Resources.Load("Fonts/Roboto/Roboto-Bold", typeof(Font));
         public static Material material = (Material)Resources.Load("Materials/Text", typeof(Material));
         public static Sprite largeButton = (Sprite)Resources.Load("Sprites/LargeEmptyButton", typeof(Sprite));
@@ -76,5 +79,6 @@ public class Settings
         public static string playButtonName = "PlayButton";
         public static string settingsButtonName = "SettingsButton";
         public static string quitButtonName = "QuitButton";
+        public static string restartButtonName = "PlayAgainButton";
     }
 }
