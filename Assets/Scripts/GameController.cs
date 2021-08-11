@@ -28,10 +28,11 @@ public class GameController : MonoBehaviour
     Vector2 cameraScale;
 
     // Time bools
-    float second = 0f;
+    float playerTime = 0f;
     float itemTime = 0f;
 
     // Game state related
+    // After the gameOver, the player is given the option to start a new game, bool is set to true if pressed
     public static bool newGame = false;
     public static bool pauseGame = true;
 
@@ -41,7 +42,7 @@ public class GameController : MonoBehaviour
     int score;
     float gameSpeed = Settings.initialGameSpeed;
 
-    // Initialize all meshes and such
+    // Calls the regeneration function to initialize everything
     private void Start()
     {
         Regenerate();
@@ -49,17 +50,23 @@ public class GameController : MonoBehaviour
 
     private void Update()
     {
-        // Pause game
+        // All functions of the game except for audio are attached to a timer, so setting timescale to 0 essentially pauses the game.
         if (pauseGame == true) { Time.timeScale = 0; }
         else if (pauseGame == false) { Time.timeScale = 1; }
 
-        second += Time.deltaTime;
+        // gameSpeed is a value that increases as the player eats apples, which correspondingly
+        // decreases the intervals inbetween the updates.
+        playerTime += Time.deltaTime;
         itemTime += Time.deltaTime;
-        if (second >= gameSpeed)
+
+        // if playerTime is greater than gameSpeed, the player will update and playerTime will be the remainder of the division.
+        if (playerTime >= gameSpeed)
         {
-            second %= gameSpeed;
+            playerTime %= gameSpeed;
             UpdatePlayer();
         }
+
+        // Effectively the logic above, but set at 4 * intervals which is determined in Settings.Items.spawnRate
         if (itemTime >= gameSpeed * Settings.Items.spawnRate)
         {
             if (itemCount < Settings.Items.maxItems)
@@ -70,9 +77,11 @@ public class GameController : MonoBehaviour
             itemTime %= gameSpeed * Settings.Items.spawnRate;
         }
 
+        // if player wants new game, delete deletable gameObjects, and reinitialize them, then set newGame to false when complete
         if (newGame) { Delete(); Regenerate(); newGame = false; }
     }
 
+    // Called whenever the game needs to be started or reinitialized
     void Regenerate()
     {
         GenerateBackground();
@@ -83,6 +92,7 @@ public class GameController : MonoBehaviour
         GenerateAudio();
     }
 
+    // Creates the gray background 
     void GenerateBackground()
     {   // Create game object
         GameObject obj = new GameObject("Field");
@@ -98,6 +108,7 @@ public class GameController : MonoBehaviour
         background.ConstructMesh();
     }
 
+    // Generates all audio components in the game
     void GenerateAudio()
     {
         // Generates at runtime, does not delete or regenerate on reload
@@ -117,6 +128,7 @@ public class GameController : MonoBehaviour
         }
     }
 
+    // Function called to generate a gameObject with audio source attached. the sound is not set to loop by default
     GameObject GenerateAudioSource(string name, AudioClip sound, GameObject parent, bool loop = false)
     {
         GameObject obj = new GameObject(name);
@@ -127,6 +139,7 @@ public class GameController : MonoBehaviour
 
         return obj;
     }
+
 
     void GenerateCells()
     {
